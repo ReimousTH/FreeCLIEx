@@ -2,6 +2,7 @@
 *.d
 
 
+packages
 
 # Compiled Object files
 *.slo

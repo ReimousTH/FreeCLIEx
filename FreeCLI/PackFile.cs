@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FreeCLI
 {
@@ -31,7 +29,9 @@ namespace FreeCLI
 
         public List<PastFileBlockEx> Files { get => _Files; set => _Files = value; }
         private List<PastFileBlockEx> _Files = new List<PastFileBlockEx>();
-        public static PackFile Read<T>(FFile<T> st)
+
+        private List<uint> _Types  = new List<uint>();
+        public static PackFile Read<T>(FFile_OLD<T> st)
         {
             var PackFile = new PackFile();
             PackFile.PackFileName = st.GetFileName();
@@ -42,12 +42,23 @@ namespace FreeCLI
             }
 
             var S1 = st.GetStreamPosition();
+            //   var BlockSize = st.ReadInt16BE();
+            //  var U1 = st.ReadInt16(); //always 3
+            // st.MovePosition(BlockSize * 4);
 
-            var BlockSize = st.ReadInt16BE();
-            var U1 = st.ReadInt16(); //always 3
-            st.MovePosition(BlockSize * 4);
-            var Fuxed = Padding.FixPaddingFixedEX(BlockSize, 2);
-            st.MovePosition(Fuxed*2);
+
+
+            //  var Fuxed = Padding.FixPaddingFixedEX(BlockSize, 2);
+            // st.MovePosition(Fuxed*2);
+
+            var Unk01 = st.ReadUInt16BE();
+            var Unk02 = st.ReadUInt16(); //always 3 , but i think it means empty offsets means min is 3\
+            //8249C334
+
+            Unk01 = (ushort)(Unk01 << 1);
+
+            var Start = Unk01 + 8;
+            var StartL = (Start + 3) & 0xFFFFFFFC;
 
 
             var S2 = st.GetStreamPosition();
@@ -73,12 +84,13 @@ namespace FreeCLI
                 {
                     var a = new PastFileEndMark();
                     PackFile.Data.Files.Add(a);
+                    break; //TODO
                 }
 
                 if (offset_table[i] == 0)
                 {
                     var a = new PastFileListA();
-                    a.File = FFile<MemoryStream>.GetFromMemoryStream($"UFile{i}", new byte[] {});
+                    a.File = FFile_OLD<MemoryStream>.GetFromMemoryStream($"UFile{i}", new byte[] {});
                     PackFile.Data.Files.Add(a);
                 }
                 else
@@ -93,7 +105,7 @@ namespace FreeCLI
                         s1 = (uint)st.GetLength();
                     }
                     
-                    PastFile.ReadPackedFile(st, PackFile.Data, offset_table[i], s1 - offset_table[i]);
+                    PastFile.ReadPackedFile(st, PackFile.Data, offset_table[i], s1 - offset_table[i],0);
                 }
      
             }
@@ -136,16 +148,25 @@ namespace FreeCLI
                     {
                         var BF = B.Files[j];
 
-                        var tu = BF.FileName.Split(Path.DirectorySeparatorChar);
-                        if (tu.Count() > 0)
+                        var ENAME = BF.FileName;
+                        if (ENAME.Contains(@"..\"))
+                        {
+                            ENAME=ENAME.Replace(@"..\", "");
+                        }
+
+                        var tu = ENAME.Split(Path.DirectorySeparatorChar);
+                   
+                        if (tu.Count() > 1)
                         {
 
-                            var S = Path.Combine(End_Dir, String.Join("", Enumerable.Range(0, tu.Count() - 1).Select(zx => tu[zx])));
-                            Directory.CreateDirectory(S);   
-                        }
+                            var S = Path.Combine(End_Dir, String.Join("\\", Enumerable.Range(0, tu.Count() - 1).Select(zx => tu[zx])));
+                            
+                            if (!Directory.Exists(S))
+                                Directory.CreateDirectory(S);   
+                            }
                       
 
-                        File.WriteAllBytes(Path.Combine(End_Dir, BF.FileName), BF.GetEndFile());
+                        File.WriteAllBytes(Path.Combine(End_Dir, ENAME), BF.GetEndFile());
                     }
 
                 }
@@ -162,7 +183,56 @@ namespace FreeCLI
         }
 
 
+        public static void Pack(string path)
+        {
 
+            var XML_FILE_NAME = Path.Combine(path, "pack.xml");
+            var Serializer = new System.Xml.Serialization.XmlSerializer(typeof(PackFileExHeader));
+            PackFileExHeader Header_Data = new PackFileExHeader();
+
+            using (var S = File.OpenRead(XML_FILE_NAME))
+            {
+                Header_Data = (PackFileExHeader)Serializer.Deserialize(S);
+            }
+
+
+            var pu = path.IndexOf($".{Header}");
+            if (pu == -1) return;
+
+            var E = System.IO.Path.GetFileName(path);
+            var FFILe = FFile_OLD<MemoryStream>.CreateFileAsMemoryStream(E);
+            FFILe.WriteString(Header);
+
+            FFILe.WriteBytes(Header_Data.SavedHeader.ToArray());
+
+
+            var StartFileOffsets = FFILe.GetStreamPosition();
+
+            var listining = new List<int>();
+
+            for (int i = 0; i < Header_Data.Files.Count; i++)
+            {
+                FFILe.WriteUInt32BE(0); //Void Data
+            }
+
+
+            for (int i = 0; i < Header_Data.Files.Count; i++)
+            {
+                var F = Header_Data.Files[i];
+                PastFile.ProcessSingleFileToPack(FFILe, F,ref listining, path);
+            }
+
+
+            FFILe.ChangeAbsolutePosition(StartFileOffsets);
+            for (int i = 0; i < Header_Data.Files.Count; i++)
+            {
+                FFILe.WriteUInt32BE((uint)listining[i]);
+
+            }
+
+            File.WriteAllBytes(path.Replace($".{Header}", ""), FFILe.GetEndFile());
+
+        }
 
 
     }

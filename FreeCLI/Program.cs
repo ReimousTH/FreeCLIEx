@@ -14,10 +14,8 @@ namespace FreeCLI
         {
             //PackFile.Read<MemoryStream>(FFile<MemoryStream>.GetMemoryStreamFromFile("D:\\Games\\X360\\SonicFreeRiders\\SonicFreeRiders\\Game\\X\\Raw\\advE")).Unpack();
             //return;
-
-
-
-         //   args = new string[] { "D:\\Games\\X360\\SonicFreeRiders\\SonicFreeRiders\\Game\\X\\pS_ST.paST" };
+            //
+            args = new string[] { "D:\\Games\\X360\\SonicFreeRiders\\SonicFreeRiders\\Game\\X\\Raw\\a00.pack" };
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -27,6 +25,7 @@ namespace FreeCLI
                     switch (HU)
                     {
                         case PackFile.Header:
+                            PackFileRework.PackFile(args[i]);
                             break;
                         case PastFile.Header:
                             PastFile.Pack(args[i]);
@@ -36,16 +35,24 @@ namespace FreeCLI
                 else
                 {
 
-                    var H = FFile<FileStream>.OpenFileAndGetHeader(args[i], 4);
-                    switch (H)
+                   // try
                     {
-                        case PackFile.Header:
-                            PackFile.Read<MemoryStream>(FFile<MemoryStream>.GetMemoryStreamFromFile(args[i])).Unpack();
-                            break;
-                        case PastFile.Header:
-                            PastFile.Read<MemoryStream>(FFile<MemoryStream>.GetMemoryStreamFromFile(args[i])).Unpack();
-                            break;
+                        var H = FFile_OLD<FileStream>.OpenFileAndGetHeader(args[i], 4);
+                        switch (H)
+                        {
+                            case PackFile.Header:
+                                PackFileRework.UnpackFile(args[i]);
+                                break;
+                            case PastFile.Header:
+                                PastFile.Read<MemoryStream>(FFile_OLD<MemoryStream>.GetMemoryStreamFromFile(args[i])).Unpack();
+                                break;
+                        }
                     }
+                   // catch
+                  //  {
+                  //      Console.WriteLine($"Error on ${args[i]}");
+                  //  }
+                
                 }
             }
    

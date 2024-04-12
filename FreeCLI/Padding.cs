@@ -62,68 +62,17 @@ namespace FreeCLI
         {
             return (value + padding - 1) & ~(padding - 1);
         }
+        public static uint FixPaddingFixedX(uint value, uint padding)
+        {
+            return (value + padding - 1) & ~(padding - 1);
+        }
         public static int FixPaddingFixedX2(int value, int pad1, int pad2)
         {
             return (value + pad1 - 1) & ~(pad2 - 1);
         }
-        public static long FixPaddingFixedX(long value, int padding)
-        {
-            return (value + padding - 1) & ~(padding - 1);
-        }
-        public static uint FixPaddingFixedX(uint value, uint padding)
-        {
+   
+      
 
-            //Shold bes
-            //(1656959 + 2047) & ~2047
-
-            return (value + padding - 1) & ~(padding - 1);
-        }
-
-        public static int FixPaddingFixedX(int value, int pad1, int pad2)
-        {
-
-            //Shold bes
-            //(1656959 + 2047) & ~2047
-
-            return (value + pad1 - 1) & ~(pad2 - 1);
-        }
-
-        public static int RemovePaddingFixedX(int value, int padding)
-        {
-            return (value - padding) & ~(padding);
-        }
-        public static int RemovePadding(int value, int padding)
-        {
-            if (value % padding == 0)
-            {
-                return value - padding;
-            }
-            return value;
-        }
-        public static int FixPaddingNewR(int value, int padding, int coubt)
-        {
-            int c = 0;
-            while (true)
-            {
-
-                if (value % padding == 0)
-                {
-                    value += padding;
-                    c++;
-                }
-                else
-                {
-                    value++;
-                }
-                if (c > coubt) break;
-
-            }
-
-            while (value % padding != 0)
-            {
-                value++;
-            }
-            return value;
-        }
+       
     }
 }

@@ -1,316 +1,374 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace FreeCLI
+namespace MabTool
 {
+ 
+    public class FFile
+	{
+		public MemoryStream _localstream;
+		public List<FFile> sub_files;
+		public string name;
 
-    public class FFile<T>
-    {
 
-        private Type StreamType;
-        private Stream Stream;
+	
 
+			
+   
 
-
-        [XmlAttribute]
-        public string FileName { get; set; }
-
-        [XmlAttribute]
-        public byte Tag;
-
-    
-        public string GetFileName()
-        {
-            return this.FileName;
-        }
 
         public FFile()
-        {
-
-        }
-        public FFile(string FileName)
-        {
-            this.FileName = FileName;
-        }
-    
-        public byte[] GetEndFile()
-        {
-            this.ChangeAbsolutePosition(0);
-
-            byte[] buffer = new byte[Stream.Length];
-            Stream.Read(buffer, 0, (int)Stream.Length);
-            return buffer;
-        }
-
-        public static FFile<MemoryStream> GetMemoryStreamFromFile(string path)
-        {
-            var u = File.ReadAllBytes(path);
-           var r  = new FFile<MemoryStream>(path);
-            r.Stream = new MemoryStream(u);
+		{
+			_localstream = new MemoryStream();
+            sub_files = new List<FFile>();
          
-           return r;
-        }
-        public static string OpenFileAndGetHeader(string path,int length)
-        {
-            var F = File.Open(path,FileMode.Open);
-            var r = new FFile<T>(path);
-            r.Stream = F;
-            var s = r.ReadFixedString(4);
-            F.Close();
-            return s;
-        }
-        public static FFile<MemoryStream> GetFromMemoryStream(string path, byte[] data)
-        {
-            var r = new FFile<MemoryStream>(path);
-            r.Stream = new MemoryStream(data);
-            return r;
-        }
-        public static FFile<MemoryStream> CreateFileAsMemoryStream(string path)
-        {
-            var r = new FFile<MemoryStream>(path);
-            r.Stream = new MemoryStream();
-            return r;
-        }
-
-        public BinaryWriter GetBinaryWritter()
-        {
-            return new BinaryWriter((Stream)Stream);
-        }
-        public BinaryReader GetBinaryReader()
-        {
-            return new BinaryReader((Stream)Stream);
-        }
-
-        public long GetStreamPosition()
-        {
-            return this.Stream.Position;
-        }
-
-
-        public void MovePosition(long direction)
-        {
-            this.Stream.Position += direction;
-        }
-
-        #region Readers
-
-        public int ReadInt32()
-        {
-            return new BinaryReader(this.Stream).ReadInt32();
-        }
-        public uint ReadUInt32()
-        {
-            return new BinaryReader(this.Stream).ReadUInt32();
-        }
-        public int ReadInt16()
-        {
-            return new BinaryReader(this.Stream).ReadInt16();
-        }
-        public int ReadUInt16()
-        {
-            return new BinaryReader(this.Stream).ReadUInt16();
 
         }
-        public int ReadInt32BE()
+        public FFile(byte[] data)
         {
-            byte[] b = new byte[4]; Stream.Read(b, 0, 4);
-            return (int)((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]);
+			_localstream = new MemoryStream(data);
+			sub_files = new List<FFile> { };
+        }	
+        public static FFile OpenFile(string path)
+		{
+
+			try
+			{
+				return new FFile() { _localstream = new MemoryStream(File.ReadAllBytes(path))};
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e.Message);
+				return new FFile();
+			}
+
+		
+		}
+
+		public void SaveFile(string path)
+		{
+			var p = Path.Combine(path, name);
+
+
+            if (name.Contains("\\"))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(p));
+			
+			}
+		
+            System.IO.File.WriteAllBytes(Path.Combine(path, name), ReadBytesAt(0, (int)_localstream.Length));
+		}
+
+        public void SaveFileF(string path)
+        {
+			var p = path;
+
+            System.IO.File.WriteAllBytes(path, ReadBytesAt(0, (int)_localstream.Length));
         }
-        public uint ReadUInt32BE()
+        public byte[] ReadBytes(int num)
+		{
+
+			byte[] loc = new byte[num];
+			_localstream.Read(loc, 0, num);
+			return loc;
+		}
+        public byte[] ReadBytesAt(uint addr,int num,SeekOrigin seekOrigin = SeekOrigin.Begin)
         {
-            byte[] b = new byte[4]; Stream.Read(b, 0, 4);
-            return (uint)((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]);
+            var _S = _localstream.Position;
+            Jump(addr, seekOrigin);
+
+            byte[] loc = new byte[num];
+            _localstream.Read(loc, 0, num);
+
+			Jump(_S, SeekOrigin.Begin);
+
+            return loc;
+        }
+        public byte[] ReadBytesAt(uint addr, uint num, SeekOrigin seekOrigin = SeekOrigin.Begin)
+        {
+            var _S = _localstream.Position;
+            Jump(addr, seekOrigin);
+
+            byte[] loc = new byte[num];
+            _localstream.Read(loc, 0, (int)num);
+
+            Jump(_S, SeekOrigin.Begin);
+
+            return loc;
+        }
+        public unsafe T[] ReadArrayBEAt<T>(uint addr, int num, SeekOrigin seekOrigin = SeekOrigin.Begin)
+        {
+            var _S = _localstream.Position;
+            Jump(addr, seekOrigin);
+
+			T[] ret = new T[num];
+
+
+            var _tt = typeof(T).GetType();
+
+			if (_tt.IsArray)
+			{
+				//var _array_size_mb = Marshal.SizeOf(typeof(T)); //
+				//	var _elm_size_type = Marshal.SizeOf(_tt.GetElementType()); //	
+			}
+			else
+			{
+				var t = sizeof(T);
+				if (t != null && t > 0)
+				{
+					unsafe
+					{
+						for (int i = 0; i < num; i++)
+						{
+							fixed (byte* ptr = ReadBytes(t).Reverse().ToArray())
+							{
+								ret[i] = *(T*)ptr;
+							}
+						}
+					}
+				}
+			}
+
+
+
+            Jump(_S, SeekOrigin.Begin);
+
+            return ret;
         }
 
-        public int ReadInt16BE()
+        public byte[] GetStreamRawData()
+		{
+			return _localstream.GetBuffer();
+		}
+        public byte[] GetArray()
         {
-            byte[] b = new byte[2]; Stream.Read(b, 0, 2);
-            return (short)((b[0] << 8) | b[1]);
+			return this.ReadBytesAt(0, (uint)_localstream.Length);
         }
-        public ushort ReadUInt16BE()
+        public string ReadArrayString(int count)
+		{
+			return System.Text.ASCIIEncoding.ASCII.GetString(ReadBytes(count));
+		}
+		public string ReadStringAt(uint addr, SeekOrigin seekOrigin = SeekOrigin.Begin)
+		{
+			var _S = _localstream.Position;
+			Jump(addr, seekOrigin);
+
+			var u = "";
+			var b = (char)1;
+
+
+
+			while ( b > 0)
+			{
+				b = (char)_localstream.ReadByte();
+				if (b <= 0) break;
+				u += b;
+			}
+
+
+            _localstream.Position = _S;
+            return u;
+
+		
+			
+		}
+
+        public string ReadString(SeekOrigin seekOrigin = SeekOrigin.Begin)
         {
-            byte[] b = new byte[2]; Stream.Read(b, 0, 2);
-            return (ushort)((b[0] << 8) | b[1]);
-        }
-        public float ReadFloatBE()
-        {
-            byte[] b = new byte[4]; Stream.Read(b, 0, 4);
-            int po = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]);
-            float result = 0;
-            unsafe
+   
+
+            var u = "";
+            var b = (char)1;
+
+            while (b > 0)
             {
-                result  = * (float*)&po;
+                b = (char)_localstream.ReadByte();
+                if (b <= 0) break;
+                u += b;
             }
-            return result;
+
+
+            return u;
+
         }
-        public string ReadFixedString(int count)
+
+		public void WriteString(string str)
+		{
+			_localstream.Write(str.ToArray().Select(zx=>(byte)zx).ToArray(), 0, str.Length);
+
+		}
+
+		public string ReadArrayStringAt(uint addr,int count,SeekOrigin seekOrigin = SeekOrigin.Begin)
+		{
+			var _S = _localstream.Position;
+			Jump(addr,seekOrigin);
+			var RE =  System.Text.ASCIIEncoding.ASCII.GetString(ReadBytes(count));
+			_localstream.Position = _S;
+
+			return RE;
+		}
+		public uint ReadUint32BE()
+		{
+			byte[] loc = ReadBytes(sizeof(uint));
+			return 0;
+			
+		}
+		public unsafe T ReadTypeBE<T>()
+		{
+			var _tt = typeof(T).GetType();
+
+			if (_tt.IsArray)
+			{
+				//var _array_size_mb = Marshal.SizeOf(typeof(T)); //
+			//	var _elm_size_type = Marshal.SizeOf(_tt.GetElementType()); //	
+			}
+			else
+			{
+				var t = sizeof(T);
+				if (t != null && t > 0)
+				{
+					var _array = ReadBytes(t);
+					_array = _array.Reverse().ToArray();
+					unsafe
+					{
+						fixed (byte* ptr = _array)
+						{
+							T _t = *(T*)ptr;
+							return _t;
+						}
+					}
+
+				}
+
+			}
+			return (T)System.Convert.ChangeType(0, typeof(T));
+
+		}
+        public unsafe T ReadType<T>()
         {
-            byte[] b = new byte[count]; Stream.Read(b, 0, count);
-            return Encoding.UTF8.GetString(b);
-        }
-        public string ReadString()
-        {
-            string result = "";
-            int ln = 0;
-            while (true)
+            var _tt = typeof(T).GetType();
+
+            if (_tt.IsArray)
             {
-                var c = (char)Stream.ReadByte();
-                if (c == 0) break;
-                result += (char)c;
-             
+                //var _array_size_mb = Marshal.SizeOf(typeof(T)); //
+                //	var _elm_size_type = Marshal.SizeOf(_tt.GetElementType()); //	
             }
-            return result;
-        }
-        public byte[] ReadBytes(int count)
-        {
-            byte[] b = new byte[count]; Stream.Read(b, 0, count);
-            return b;
-        }
-        public byte ReadByte()
-        {
-
-            return (byte)Stream.ReadByte();
-        }
-        public byte[] ReadBytes(long count)
-        {
-            byte[] b = new byte[count]; Stream.Read(b, 0, (int)count);
-            return b;
-        }
-        public void ChangeAbsolutePosition(long pos)
-        {
-            this.Stream.Position = pos;
-        }
-
-        #endregion
-
-        #region Writers
-
-        public void WriteInt32(int val)
-        {
-            byte[] save = new byte[4];
-            unsafe
+            else
             {
-                var x = (byte*)&val;
-                save[0] = x[0];
-                save[1] = x[1];
-                save[2] = x[2];
-                save[3] = x[3];
+                var t = sizeof(T);
+                if (t != null && t > 0)
+                {
+                    var _array = ReadBytes(t);
+                    _array = _array.ToArray();
+                    unsafe
+                    {
+                        fixed (byte* ptr = _array)
+                        {
+                            T _t = *(T*)ptr;
+                            return _t;
+                        }
+                    }
 
+                }
 
             }
-            this.Stream.Write(save, 0, 4);
+            return (T)System.Convert.ChangeType(0, typeof(T));
+
         }
-        public void WriteInt32BE(int val)
+		public unsafe void WriteBytes(byte[] data)
+		{
+            _localstream.Write(data,0, data.Length);	
+        }
+        public unsafe void WriteBytesAt(uint addr,byte[] data,SeekOrigin seekOrigin = SeekOrigin.Begin)
         {
-            byte[] save = new byte[4];
-            unsafe
-            {
-                var x = (byte*)&val;
-                save[0] = x[3];
-                save[1] = x[2];
-                save[2] = x[1];
-                save[3] = x[0];
-            }
-            this.Stream.Write(save, 0, 4);
-        }
-        public void WriteUInt32BE(uint val)
-        {
-            byte[] save = new byte[4];
-            unsafe
-            {
-                var x = (byte*)&val;
-                save[0] = x[3];
-                save[1] = x[2];
-                save[2] = x[1];
-                save[3] = x[0];
-            }
-            this.Stream.Write(save, 0, 4);
-        }
-        public void WriteUInt32(int val)
-        {
-            byte[] save = new byte[4];
-            unsafe
-            {
-                var x = (byte*)&val;
-                save[0] = x[0];
-                save[1] = x[1];
-                save[2] = x[2];
-                save[3] = x[3];
-            }
-            this.Stream.Write(save, 0, 4);
-        }
-        public void WriteByte(byte val)
-        {
-            this.Stream.WriteByte(val);
-            
-        }
-        public void WriteUInt16(byte val)
-        {
-            byte[] save = new byte[2];
-            unsafe
-            {
-                var x = (byte*)&val;
-                save[0] = x[0];
-                save[1] = x[1];
-       
-            }
-            this.Stream.Write(save, 0, 2);
+			var pos = GetCurrentPosition();
+			Jump(addr, seekOrigin);
+			_localstream.Write(data, 0, data.Length);
+			Jump(pos);
+		}
 
 
-        }
-        public void WriteUInt16BE(byte val)
-        {
-            byte[] save = new byte[2];
-            unsafe
-            {
-                var x = (byte*)&val;
-                save[0] = x[1];
-                save[1] = x[0];
-    
-            }
-            this.Stream.Write(save, 0, 2);
 
 
-        }
+        public unsafe void WriteTypeBE<T>(T value)
+		{
+			var _tt = typeof(T).GetType();
+
+			if (_tt.IsArray)
+			{
+				//var _array_size_mb = Marshal.SizeOf(typeof(T)); //
+				//	var _elm_size_type = Marshal.SizeOf(_tt.GetElementType()); //	
+			}
+			else
+			{
+				var t = sizeof(T);
+				var bt = new byte[t];
+				if (t != null && t > 0)
+				{
+
+					unsafe
+					{
+						T _vl = value;
+
+						var s = (byte*)&_vl;
+						for (int i = 0; i < t; i++)
+						{
+							bt[i] = *(s+(t-1-i));
+						}
+					}
+					_localstream.Write(bt,0,bt.Length);
+				}
+			}
 
 
-        public void WriteString(string str)
-        {
-            var buff = System.Text.Encoding.ASCII.GetBytes(str);
-            this.Stream.Write(buff, 0, str.Length);
-        }
-        public void WriteBytes(byte[] bytes)
-        {
-            this.Stream.Write(bytes, 0, bytes.Length);
-        }
+		}
+		public unsafe void WriteTypeBEAt<T>(long addr,T value , SeekOrigin origin = SeekOrigin.Begin)
+		{
 
-        public static long GetFilzeSie(string path)
-        {
-            return new FileInfo(path).Length;
-        }
-
-        public void WritePadding(int count)
-        { 
-            for (int i= 0; i < count; i++)
-            {
-                this.Stream.WriteByte(0);
-            }
-        }
-            #endregion
+			var S = _localstream.Position;
+			Jump(addr, origin);
+			WriteTypeBE<T>(value);
+			_localstream.Position = S;
+		}
 
 
-        public long GetLength()
-        {
-            return Stream.Length;
-        }
+		public unsafe T ReadTypeBEAt<T>(uint addr, SeekOrigin origin = SeekOrigin.Begin)
+		{
+			var S1 = _localstream.Position;
+			Jump(addr, origin);
+			var S =  ReadTypeBE<T>();
+			Jump(S1, SeekOrigin.Begin);
+			return S;
+		}
+
+		public void Jump(int distance,SeekOrigin origin= SeekOrigin.Begin)
+		{
+
+			_localstream.Seek(distance, origin);
+		}
+		public void Jump(uint distance, SeekOrigin origin = SeekOrigin.Begin)
+		{
+			_localstream.Seek(distance, origin);
+		}
+		public void Jump(long distance, SeekOrigin origin = SeekOrigin.Begin)
+		{
+			_localstream.Seek(distance, origin);
+		}
 
 
-        }
+		public long GetCurrentPosition()
+		{
+			 return _localstream.Position;
+		}
+
+		
+	}
 }
