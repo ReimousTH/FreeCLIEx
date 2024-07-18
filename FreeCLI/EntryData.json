@@ -1,0 +1,63 @@
+{
+  "EntriesData": [
+    {
+      "Name": "MainMenuHUD",
+      "KeepEntryNameIndexed": true,
+      "KeepEntryFilesNameIndexed": true,
+      "Type": 53000,
+      "GroupSize": -1,
+      "Types": [
+        "RawFile",
+		"TexturePack",
+		"TexturePack"
+      ]
+    },
+	{
+      "Name": "ModelPackAndTexturePack",
+      "KeepEntryNameIndexed": true,
+      "KeepEntryFilesNameIndexed": true,
+      "Type": 32000,
+      "GroupSize": -1,	
+      "Types": [
+        "RawFile",
+		"TexturePack"
+      ]
+    },
+	{
+      "Name": "Entry_53050",
+      "KeepEntryNameIndexed": true,
+      "KeepEntryFilesNameIndexed": true,
+      "Type": 53050,
+      "GroupSize": -1,	
+      "Types": [
+        "NOFile",
+		"TexturePack",
+		"NOFile"
+      ]
+    },
+	{
+      "Name": "MMFontLibData",
+      "KeepEntryNameIndexed": true,
+      "KeepEntryFilesNameIndexed": true,
+      "Type": 10002,
+      "GroupSize": -1,	
+      "Types": [
+        "RawFile",
+		"TexturePack",
+		"RawFile"
+      ]
+    },
+	{
+      "Name": "ADVTexturepackFGB",
+      "KeepEntryNameIndexed": true,
+      "KeepEntryFilesNameIndexed": true,
+      "Type": 53001,
+      "GroupSize": -1,	
+      "Types": [
+        "TexturePack",
+		"RawFile",
+		"TexturePack"
+      ]
+    }
+  ]
+}
