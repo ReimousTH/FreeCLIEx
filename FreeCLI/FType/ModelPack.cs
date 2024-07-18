@@ -8,49 +8,26 @@ using System.Threading.Tasks;
 
 namespace FreeCLI.FType
 {
-    public class TexturePack : RawFile
+    public class ModelPack : RawFile
     {
-        public TexturePack()
+        public ModelPack()
         {
             this.IsUnpackable = true;
         }
         
-        public TexturePack(FFile f):base(f) {
+        public ModelPack(FFile f):base(f) {
 
             this.Attributes[RawFile.IsUnpackedAttribute] = "true";
             this.IsUnpackable = true;
         }
-        public TexturePack(FFile f,string name) : base(f,name)
+        public ModelPack(FFile f,string name) : base(f,name)
         {
 
             this.Attributes[RawFile.IsUnpackedAttribute] = "true";
             this.IsUnpackable=true;
         }
 
-        public string GetFixedName(string path)
-        {
-            if (path.Contains("..\\"))
-            {
-               return path.Replace("..\\", ".._\\");
-            }
-            if (path.Contains("../"))
-            {
-                return path.Replace("../", "..__/");
-            }
-            return path;
-        }
-        public string GetFixedPackedName(string path)
-        {
-            if (path.Contains(".._\\"))
-            {
-                return path.Replace(".._\\", "..\\");
-            }
-            if (path.Contains("..__/"))
-            {
-                return path.Replace("..__/", "../");
-            }
-            return path; 
-        }
+ 
         public override RawFile OnUnpack()
         {
             Raw.Jump(0);
@@ -80,10 +57,7 @@ namespace FreeCLI.FType
                 var offset = offsets[i];
                 var size = sizes[i];
                 var name = names[i];
-                name = GetFixedName(name);
-
-
-               
+        
 
                 byte tag = 0;
                 if (file_tags == 1) tag = tags[i];
@@ -129,7 +103,7 @@ namespace FreeCLI.FType
              
                 var raw_file = RawFiles[i];
                 var raw_file_name = raw_file.Attributes[PathAttribute];
-                raw_file_name = GetFixedPackedName(raw_file_name);
+//                raw_file_name = GetFixedPackedName(raw_file_name);
 
                 data_offset = Padding.FixPaddingFixedX((uint)data_offset, 0x20);
                 var pad_length = (uint)Padding.FixPaddingFixedX((uint)raw_file.Raw._localstream.Length, 0x20) - (raw_file.Raw._localstream.Length);

@@ -11,6 +11,10 @@ namespace FreeCLI.FType
     public class TextureFile : RawFile
     {
         
+        public TextureFile()
+        {
+
+        }
         public TextureFile(FFile f) {
 
         }
@@ -22,6 +26,12 @@ namespace FreeCLI.FType
         public override string OnSaveFile(string path)
         {
             return path+".dds";
+        }
+
+        public override string OnFileOpen(string path)
+        {
+            return path + ".dds";
+
         }
 
     }

@@ -70,9 +70,8 @@ namespace FreeCLI
         {
             return (value + pad1 - 1) & ~(pad2 - 1);
         }
-   
-      
 
-       
+      
+      
     }
 }

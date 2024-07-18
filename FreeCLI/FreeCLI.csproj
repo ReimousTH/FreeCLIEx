@@ -8,10 +8,11 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>FreeCLI</RootNamespace>
     <AssemblyName>FreeCLI</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -75,15 +76,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entries\EntryR.cs" />
     <Compile Include="Entries\EntryTypeAttributecs.cs" />
+    <Compile Include="Entries\EntryTypeDataSerialize.cs" />
+    <Compile Include="Entries\Entry_10001.cs" />
+    <Compile Include="Entries\Entry_53001.cs" />
+    <Compile Include="Entries\Entry_10002.cs" />
+    <Compile Include="Entries\Entry_55001.cs" />
+    <Compile Include="Entries\Entry_55002.cs" />
+    <Compile Include="Entries\Entry_53201.cs" />
+    <Compile Include="Entries\Entry_53200.cs" />
+    <Compile Include="Entries\Entry_53101.cs" />
+    <Compile Include="Entries\Entry_53051.cs" />
+    <Compile Include="Entries\Entry_53050.cs" />
     <Compile Include="Entries\Entry_53000.cs" />
-    <Compile Include="Entries\Entry_32000_0.cs" />
+    <Compile Include="Entries\Entry_32000.cs" />
     <Compile Include="Entries\Entry.cs" />
-    <Compile Include="Entries\SerializedEntry.cs" />
-    <Compile Include="Entries\SerializedEntryMember.cs" />
     <Compile Include="FFile.cs" />
     <Compile Include="FFile_OLD.cs" />
+    <Compile Include="FType\NOFile.cs" />
     <Compile Include="FType\TextureFile.cs" />
+    <Compile Include="FType\ModelPack.cs" />
+    <Compile Include="FType\TextFile.cs" />
     <Compile Include="FType\TexturePack.cs" />
     <Compile Include="FType\RawFile.cs" />
     <Compile Include="PackFile.cs" />
@@ -92,6 +106,7 @@
     <Compile Include="PastFile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XboxFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

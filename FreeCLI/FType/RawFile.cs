@@ -20,6 +20,7 @@ namespace FreeCLI.FType
     [JsonDerivedType(typeof(RawFile), typeDiscriminator: "RawFile")]
     [JsonDerivedType(typeof(TexturePack), typeDiscriminator: "TexturePack")]
     [JsonDerivedType(typeof(TextureFile), typeDiscriminator: "TextureFile")]
+    [JsonDerivedType(typeof(NOFile), typeDiscriminator: "NOFile")]
     public class RawFile
     {
 
@@ -68,8 +69,8 @@ namespace FreeCLI.FType
 
         public RawFile Unpack()
         {
-            if (IsUnpackable) { return OnUnpack(); }
-            return this;
+            return OnUnpack();
+    
         }
         public virtual RawFile OnUnpack()
         {
@@ -79,12 +80,11 @@ namespace FreeCLI.FType
 
         public RawFile Pack()
         {
-            return this;
+            return OnPack(); 
         }
 
         public virtual RawFile OnPack()
         {
-            if (IsUnpackable) return OnUnpack();
             return this;
         }
 
@@ -98,6 +98,17 @@ namespace FreeCLI.FType
         public virtual string OnSaveFile(string path)
         {
             return path;
+        }
+
+        public virtual string OnFileOpen(string path)
+        {
+            return path;
+        }
+        public void OpenFile(string path)
+        {
+            path = OnFileOpen(path);
+            this.Raw = FFile.OpenFile(path);
+
         }
 
 

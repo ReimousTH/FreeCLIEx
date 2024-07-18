@@ -1,6 +1,8 @@
-﻿using System;
+﻿using FreeCLI.Entries;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,13 +11,17 @@ namespace FreeCLI
 {
     internal class Program
     {
-        
+     
+
+
         static void Main(string[] args)
         {
-            //PackFile.Read<MemoryStream>(FFile<MemoryStream>.GetMemoryStreamFromFile("D:\\Games\\X360\\SonicFreeRiders\\SonicFreeRiders\\Game\\X\\Raw\\advE")).Unpack();
-            //return;
-            //
-            args = new string[] { "D:\\Games\\X360\\SonicFreeRiders\\SonicFreeRiders\\Game\\X\\Raw\\a00.pack" };
+            EntryTypeDataSerialize.Deserialize();
+            // EntryTypeDataSerialize.Serialize();
+
+            
+
+           // args = new string[] { "D:\\Games\\X360\\SonicFreeRiders\\SonicFreeRiders\\Game\\X360\\mods\\AntiDLL\\pS_ST" };
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -37,6 +43,8 @@ namespace FreeCLI
 
                    // try
                     {
+                 
+                    //    var Y = XboxFile.OpenFile(args[i]); ;
                         var H = FFile_OLD<FileStream>.OpenFileAndGetHeader(args[i], 4);
                         switch (H)
                         {

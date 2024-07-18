@@ -15,36 +15,34 @@ namespace FreeCLI.Entries
 
 
 
-    [EntryType(32000)]
-    public class Entry_32000:Entry
+    [EntryType(55002)]
+    public class Entry_55002 : Entry
     {
-        public Entry_32000()
+        public Entry_55002()
         {
             OnBaseInit();
-
         }
-        public Entry_32000(uint EntryType,uint index)
+        public Entry_55002(uint EntryType,uint index)
         {
             OnInit(EntryType, index, -1);
         }
 
 
-        public override RawFile OnFileDataUnpackProcess(FFile file, uint index,int yindex)
-        {
-            var gindex = index % 2;
-            if (gindex == 0)
-            {
-              
-            }
-            else 
-            {
-                return new TexturePack(file, $"TexturePack_{index}").Unpack();
-            }
 
-            return new RawFile(file,$"File_{GetEntryName()}_{index}").Unpack();
+        public override RawFile OnFileDataUnpackProcess(FFile file, uint index, int yindex)
+        {
+       
+                return new TexturePack(file, $"TexturePack_{index}").Unpack();
+        
         }
 
-   
-  
+
+        public override string GetEntryName()
+        {
+            return $"TexturePack_{Index}";
+        }
+
+
+
     }
 }

@@ -15,44 +15,46 @@ namespace FreeCLI.Entries
 
 
 
-    [EntryType(53000)]
-    public class Entry_53000:Entry
+    [EntryType(53101)]
+    public class Entry_53101 : Entry
     {
-        public Entry_53000()
+        public Entry_53101()
         {
             OnBaseInit();
         }
-        public Entry_53000(uint EntryType,uint index)
+        public Entry_53101(uint EntryType,uint index)
         {
-            OnInit(EntryType, index, -1);
+            OnInit(EntryType, index, 3);
         }
 
 
 
         public override RawFile OnFileDataUnpackProcess(FFile file, uint index, int yindex)
         {
-            var gindex = index % 3;
-            //FBG
-            if (gindex == 0)
+        
+            //.eno
+            if (yindex == 0)
             {
-
+                return new NOFile(file, $"NOFILE_{index}").Unpack();
             }
-            else if (index == 1)
-            {
-                return new TexturePack(file, $"TexturePack_{index}").Unpack();
-            }
-            else if (index == 2)
+            else if (yindex == 1)
             {
                 return new TexturePack(file, $"TexturePack_{index}").Unpack();
             }
-
+            //.env
+            else if (yindex == 2)
+            {
+                return new NOFile(file, $"NOFILE_{index}").Unpack();
+            }
+         
             return new RawFile(file, $"File_{GetEntryName()}_{index}").Unpack();
         }
 
         public override string GetEntryName()
         {
-            return $"FBGTextureX2_{Index}";
+            return $"GModelTextureMotion_{Index}";
         }
+
 
 
 

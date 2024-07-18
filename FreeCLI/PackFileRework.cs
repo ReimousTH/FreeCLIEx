@@ -50,7 +50,7 @@ namespace FreeCLI
     {
 
 
-        public List<Entries.Entry> entries { get; set; } = new List<Entries.Entry>();
+        public List<Entries.EntryR> entries { get; set; } = new List<Entries.EntryR>();
         public const uint _HEADER_ = 0x7061636B;
 
         public FFile _file;
@@ -73,6 +73,7 @@ namespace FreeCLI
             _file = new FFile();
             _file.WriteTypeBEAt<uint>(0,_HEADER_);
             _file.WriteTypeBEAt<ushort>(4, (ushort)entries.Count);
+            _file.WriteTypeBEAt<ushort>(6, 0x300); //Version
 
 
             var EntryCount = entries.Count;
@@ -142,10 +143,7 @@ namespace FreeCLI
             var DataOffset2 = (FEntryCount + DataOffset1);
             var DataOffset3 = (DataOffset2 + FEntryCount);
 
-
             Console.WriteLine($"D0 {DataOffset0} D1 {DataOffset1} D2 {DataOffset2} D3 {DataOffset3}");
-
-
 
             for (int i = 0; i < EntryCount; i++)
             {
@@ -154,9 +152,9 @@ namespace FreeCLI
                 var SubEntryStartIndex = _file.ReadTypeBEAt<ushort>((uint)(2 * i + DataOffset1));
                 var SubEntryStartFileOffset = (SubEntryStartIndex * 4) + DataOffset3;
 
-                Entry entry;
+                EntryR entry = new EntryR(SubEntryType, (uint)i); 
 
-
+                /*
                 entry = new Entry(SubEntryType, (uint)i);
                 var attrs = typeof(Entry).GetCustomAttributes<JsonDerivedTypeAttribute>();
                 foreach (var attr in attrs)
@@ -168,16 +166,15 @@ namespace FreeCLI
                         break;
                     }
                 }
+                */
+              
 
 
-
-                entry.Unpack(_file, SubEntryCount, (uint)SubEntryStartFileOffset, null);
+                entry.Unpack(_file, SubEntryCount, (uint)SubEntryStartFileOffset);
 
                 entries.Add(entry);
 
             }
-
-
 
 
 
@@ -219,14 +216,14 @@ namespace FreeCLI
                             {
                                 var submember = member.RawFiles[z];
                                 var submember_path = Path.Combine(member_path, submember.Attributes[RawFile.PathAttribute]);
-                                submember.Raw = FFile.OpenFile(submember_path);
+                                submember.OpenFile(submember_path);
 
                             }
 
                         }
                         else
                         {
-                            member.Raw = FFile.OpenFile(member_path);
+                            member.OpenFile(member_path);
                         }
 
                     }
@@ -236,7 +233,8 @@ namespace FreeCLI
 
        
             json.Pack();
-            path += ".packed";
+
+            path = Path.Combine(Path.GetDirectoryName(path),Path.GetFileNameWithoutExtension(path));
             json._file.SaveFileF(path);
 
 

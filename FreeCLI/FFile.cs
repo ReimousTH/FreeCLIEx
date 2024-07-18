@@ -71,6 +71,7 @@ namespace MabTool
         {
 			var p = path;
 
+			Directory.CreateDirectory(Path.GetDirectoryName(path));
             System.IO.File.WriteAllBytes(path, ReadBytesAt(0, (int)_localstream.Length));
         }
         public byte[] ReadBytes(int num)
@@ -369,6 +370,13 @@ namespace MabTool
 			 return _localstream.Position;
 		}
 
-		
-	}
+        internal T ReadTypeAt<T>(uint addr,SeekOrigin origin = SeekOrigin.Begin)
+        {
+            var S1 = _localstream.Position;
+            Jump(addr, origin);
+            var S = ReadType<T>();
+            Jump(S1, SeekOrigin.Begin);
+            return S;
+        }
+    }
 }

@@ -14,9 +14,9 @@ namespace FreeCLI.Entries
 {
 
 
-    public class Group
+    public class GroupR
     {
-        public Group()
+        public GroupR()
         {
 
         }
@@ -25,27 +25,14 @@ namespace FreeCLI.Entries
         public List<RawFile> Members { get; set; } = new List<RawFile>();
     }
 
-    [EntryType(0xFFFFFFFF)]
-    [JsonDerivedType(typeof(Entry), typeDiscriminator: "Entry")]
-    [JsonDerivedType(typeof(Entry_10001), typeDiscriminator: "Entry_10001")]
-    [JsonDerivedType(typeof(Entry_10002), typeDiscriminator: "Entry_10002")]
-    [JsonDerivedType(typeof(Entry_32000), typeDiscriminator: "Entry_32000")]
-    [JsonDerivedType(typeof(Entry_53000), typeDiscriminator: "Entry_53000")]
-    [JsonDerivedType(typeof(Entry_53001), typeDiscriminator: "Entry_53001")]
-    [JsonDerivedType(typeof(Entry_53050), typeDiscriminator: "Entry_53050")]
-    [JsonDerivedType(typeof(Entry_53051), typeDiscriminator: "Entry_53051")]
-    [JsonDerivedType(typeof(Entry_53101), typeDiscriminator: "Entry_53101")]
-    [JsonDerivedType(typeof(Entry_53200), typeDiscriminator: "Entry_53200")]
-    [JsonDerivedType(typeof(Entry_53201), typeDiscriminator: "Entry_53201")]
-    [JsonDerivedType(typeof(Entry_55001), typeDiscriminator: "Entry_55001")]
-    [JsonDerivedType(typeof(Entry_55002), typeDiscriminator: "Entry_55002")]
-    public class Entry
+
+    public class EntryR
     {
-        public Entry()
+        public EntryR()
         {
             OnBaseInit();
         }
-        public Entry(uint EntryType, uint index)
+        public EntryR(uint EntryType, uint index)
         {
             OnInit(EntryType, index, -1);
         }
@@ -54,7 +41,7 @@ namespace FreeCLI.Entries
 
             Index = 0;
             GroupSize = -1;
-            Groups = new List<Group>();
+            Groups = new List<GroupR>();
         }
         public virtual void OnInit(uint EntryType, uint index, int group_size)
         {
@@ -67,20 +54,30 @@ namespace FreeCLI.Entries
 
         public virtual string GetEntryName()
         {
-            return $"Entry_{GetEntryType()}_{Index}";
+
+            var data = EntryTypeDataSerialize.GetEntryDataByID(Type);
+            if (data != null && data.KeepEntryNameIndexed)
+            {
+                return $"{data.Name}_{Index}";
+            }
+            else if (data != null)
+            {
+                return $"{data.Name}";
+            }
+            else
+            {
+                return $"Entry_{GetEntryType()}_{Index}";
+            }
+          
         }
         public virtual uint GetEntryType()
         {
-            EntryTypeAttribute attr = GetType().GetCustomAttribute<EntryTypeAttribute>();
-            if (attr != null && attr.Type != 0xFFFFFFFF) return attr.Type;
             return this.Type;
         }
 
 
 
-        public List<Group> Groups { get; set; }
-
-
+        public List<GroupR> Groups { get; set; }
 
 
         public string Name { get; set; }
@@ -99,7 +96,55 @@ namespace FreeCLI.Entries
 
         public virtual RawFile OnFileDataUnpackProcess(FFile file, uint index, int yindex)
         {
-            return new RawFile(file, $"File_{GetEntryName()}_{index}").Unpack();
+            var D = EntryTypeDataSerialize.GetEntryDataByID(Type);
+            string end_name = $"File_{GetEntryName()}_{index}";
+            if (D == null) { return new RawFile(file, end_name).Unpack(); }
+
+    
+
+            var types = EntryTypeDataSerialize.GetTypeListByName(Type);
+            Type RawFile;
+
+            if (types.Count > 0)
+            {
+                //No Groups
+                if (GroupSize <= 0)
+                {
+
+                    if (index > types.Count-1)
+                    {
+                        RawFile = types[types.Count - 1];
+                    }
+                    else
+                    {
+                        RawFile = types[(int)index];
+                    }
+                }
+                else
+                {
+                    if (yindex > types.Count-1)
+                    {
+                        RawFile = types[types.Count-1];
+                    }
+                    else
+                    {
+                        RawFile = types[(int)yindex];
+                    }
+
+                }
+            }
+            else
+            {
+                RawFile = typeof(RawFile);
+            }
+    
+            end_name = $"{RawFile.Name}_{index}";
+            if (!D.KeepEntryFilesNameIndexed) end_name = $"{RawFile.Name}";
+
+
+            var ProccessedFile = (RawFile)RawFile.GetConstructor(new Type[] { typeof(FFile),typeof(string)}).Invoke(new object[] {file, end_name});
+
+            return ProccessedFile.Unpack();
         }
 
         public void Unpack(FFile file, uint count, uint offset)
@@ -108,11 +153,11 @@ namespace FreeCLI.Entries
             if (this.GroupSize != -1)
             {
                 Groups.Clear();
-                Groups.AddRange(Enumerable.Range(0, (int)(count /this.GroupSize)).Select(zx => new Group() { path = $"Group_{zx}" }));
+                Groups.AddRange(Enumerable.Range(0, (int)(count /this.GroupSize)).Select(zx => new GroupR() { path = $"Group_{zx}" }));
             }
             else
             {
-                Groups.Add(new Group() { path = $"Group_{0}" });
+                Groups.Add(new GroupR() { path = $"Group_{0}" });
             }
 
 
