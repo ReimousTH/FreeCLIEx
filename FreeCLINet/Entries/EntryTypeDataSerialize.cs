@@ -115,11 +115,11 @@ namespace FreeCLI.Entries
         public static EntryTypeDataSerialize Deserialize()
         {
             var jsonPath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,Name);
-            string jsonData = File.ReadAllText(jsonPath);
+
 
             if (File.Exists(jsonPath))
             {
-                Instance = JsonSerializer.Deserialize<EntryTypeDataSerialize>(jsonData);
+                Instance = JsonSerializer.Deserialize<EntryTypeDataSerialize>(File.ReadAllText(jsonPath));
 
             }
             else
